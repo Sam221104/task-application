@@ -3,7 +3,7 @@
     {
       "id": "644c",
       "taskName": "Backend first part",
-      "completed": true
+      "completed": false
     },
     {
       "id": "3d83",
@@ -13,6 +13,11 @@
     {
       "id": "39fc",
       "taskName": "Capstone Project - Music playlist",
+      "completed": true
+    },
+    {
+      "id": "8b18",
+      "taskName": "Capstone Project",
       "completed": false
     }
   ]
