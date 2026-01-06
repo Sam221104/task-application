@@ -1,6 +1,6 @@
 import type { Todo } from "@/model/model";
 
-const API_BASE_URL = "http://localhost:3000/";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const fetchAllTasks = async () => {
   try {
@@ -38,8 +38,10 @@ export const deleteTodo = async (id: string) => {
   }
 };
 
-export const updateTodoName = async ({id,taskName,}
-  : Pick<Todo, "id" | "taskName">) => {
+export const updateTodoName = async ({
+  id,
+  taskName,
+}: Pick<Todo, "id" | "taskName">) => {
   try {
     const response = await fetch(`${API_BASE_URL}tasks/${id}`, {
       method: "PATCH",
@@ -53,8 +55,10 @@ export const updateTodoName = async ({id,taskName,}
   }
 };
 
-export const toggleTodoStatus = async ({id,completed,}
-  : Pick<Todo, "id" | "completed">) => {
+export const toggleTodoStatus = async ({
+  id,
+  completed,
+}: Pick<Todo, "id" | "completed">) => {
   try {
     const response = await fetch(`${API_BASE_URL}tasks/${id}`, {
       method: "PATCH",
