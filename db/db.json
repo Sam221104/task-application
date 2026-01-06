@@ -1,0 +1,19 @@
+{
+  "tasks": [
+    {
+      "id": "644c",
+      "taskName": "Backend first part",
+      "completed": true
+    },
+    {
+      "id": "3d83",
+      "taskName": "Frontend Documentation",
+      "completed": true
+    },
+    {
+      "id": "39fc",
+      "taskName": "Capstone Project - Music playlist",
+      "completed": false
+    }
+  ]
+}

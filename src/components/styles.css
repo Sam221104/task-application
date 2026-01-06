@@ -1,0 +1,111 @@
+
+.App {
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: rgb(35, 37, 40);
+  font-family:Verdana, Geneva, Tahoma, sans-serif;
+}
+
+h1 {
+  text-transform: uppercase;
+  font-size: 50px;
+  margin: 30px 0;
+  color: white;
+  z-index: 1;
+  text-align: center;
+}
+
+/* @media (max-width: 800px) {
+  h1 {
+    margin: 15px 0;
+    font-size: 40px;
+  }
+} */
+
+input{
+    padding: 10px;
+    width: 300px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    outline: none;
+    margin-right: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    
+}
+.button-input{
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    background-color: #a72878;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.button-input:hover{
+    background-color: #d313b9;
+    transition: 0.3s;
+}
+
+.todo-single {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: nowrap;
+  border-radius: 5px;
+  padding: 20px;
+  margin-top: 15px;
+  background-color: #6623d1e0;
+  transition: 0.2s;
+}
+.todo-single-text {
+    text-transform:capitalize;
+    flex: 1;
+    min-width: 0;
+    padding: 5px;
+    border: none;
+    font-size: 15px;
+}
+.todo-single div {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.todo-single input {
+  flex: 1;
+  min-width: 0;
+}
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10px;
+  font-size: 25px;
+  cursor: pointer;
+}
+.todo-list {
+    border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  width: 49%;
+  margin-right: 5px;
+  padding: 15px;
+  background-color: rgb(50, 195, 205);
+}
+.container {
+   width: 95%;
+  display: flex;
+  margin-top: 10px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.remove{
+    background-color: #d33313;
+}
+
