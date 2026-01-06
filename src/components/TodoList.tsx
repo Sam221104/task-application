@@ -24,7 +24,7 @@ const TodoList = ({
       left={
         <Droppable droppableId="TasksList">
           {(provided) => (
-            <div className="todo-list" ref={provided.innerRef} {...provided.droppableProps}>
+            <div className="todo-list active" ref={provided.innerRef} {...provided.droppableProps}>
               <span>Active Tasks</span>
               {tasks.map((task, index) => (
                 <SingleTask
