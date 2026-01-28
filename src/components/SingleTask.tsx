@@ -33,7 +33,7 @@ const SingleTask = ({ index, task, onDelete, onToggle, onUpdate }: SingleTaskPro
   }, [edit])
 
   return (
-    <Draggable draggableId={task.id.toString()} index={index}>
+    <Draggable draggableId={task.id?.toString() || String(Math.random())} index={index}>
       {(provided) => (
         <form 
           className="todo-single" 

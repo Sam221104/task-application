@@ -6,6 +6,7 @@ import {
   deleteTodo,
   updateTodoName,
   toggleTodoStatus,
+  reorderTasks,
 } from "../api/api";
 import type { Todo } from "../model/model";
 import { useMemo } from "react";
@@ -40,13 +41,15 @@ export const useTodos = () => {
   //     completed: true,
   //   }));
   const activeTasks = useMemo(() => {
-    console.log("Filtering active tasks");
-    return allTasks.filter((t: Todo) => !t.completed);
+    return allTasks
+      .filter((t: Todo) => !t.completed)
+      .sort((a: Todo, b: Todo) => (a.order || 0) - (b.order || 0));
   }, [allTasks]);
 
   const completedTasks = useMemo(() => {
-    console.log("Filtering completed tasks");
-    return allTasks.filter((t: Todo) => t.completed);
+    return allTasks
+      .filter((t: Todo) => t.completed)
+      .sort((a: Todo, b: Todo) => (a.order || 0) - (b.order || 0));
   }, [allTasks]);
 
   // Mutations
@@ -70,6 +73,17 @@ export const useTodos = () => {
     onSuccess: invalidateAll,
   });
 
+  const reorderMutation = useMutation({
+    mutationFn: reorderTasks,
+    onSuccess: () => {
+      console.log("Reorder mutation success, invalidating queries");
+      invalidateAll();
+    },
+    onError: (error) => {
+      console.error("Reorder mutation error:", error);
+    },
+  });
+
   return {
     activeTasks,
     completedTasks,
@@ -77,5 +91,6 @@ export const useTodos = () => {
     deleteTask: deleteMutation.mutate,
     updateTask: updateMutation.mutate,
     toggleTask: toggleMutation.mutate,
+    reorderTasks: reorderMutation.mutate,
   };
 };

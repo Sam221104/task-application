@@ -1,5 +1,6 @@
 export type Todo = {
-    id: string;
-    taskName: string;
-    completed: boolean;
-}
+  id: string;
+  taskName: string;
+  completed: boolean;
+  order: number;
+};

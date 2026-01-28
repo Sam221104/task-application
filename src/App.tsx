@@ -11,32 +11,101 @@ function App() {
     addTask, 
     deleteTask, 
     updateTask, 
-    toggleTask
+    toggleTask,
+    reorderTasks
   } = useTodos()
 
   const handleAdd = (todo: string) => {
     addTask({ taskName: todo })
   }
 
-  const onDragEnd = (result: DropResult) => { //dropresult provides source and destination of the dragged item and other info like draggableId, mode etc.
+  const onDragEnd = (result: DropResult) => {
+    console.log('Drag ended:', result);
     const { source, destination } = result;
-    if (!destination) return;
+    if (!destination) {
+      console.log('No destination, returning');
+      return;
+    }
     if (
       destination.droppableId === source.droppableId &&
       destination.index === source.index
-    ) return;
+    ) {
+      console.log('Same position, returning');
+      return;
+    }
 
-    const fromActive = source.droppableId === "TasksList";
-    const item = fromActive
-      ? activeTasks[source.index]
-      : completedTasks[source.index];
+    const sourceIsActive = source.droppableId === "TasksList";
+    const destIsActive = destination.droppableId === "TasksList";
+    
+    const sourceTasks = sourceIsActive ? activeTasks : completedTasks;
+    const destTasks = destIsActive ? activeTasks : completedTasks;
+    
+    console.log('Source tasks:', sourceTasks);
+    console.log('Dest tasks:', destTasks);
+    
+    const item = sourceTasks[source.index];
+    if (!item) {
+      console.log('No item found at source index');
+      return;
+    }
 
-    if (item) {
-      //toggle the completed status
-      toggleTask({
-        id: item.id,
-        completed: destination.droppableId === "CompletedTasks",
-      });
+    console.log('Moving item:', item);
+
+    // If moving between different lists (active <-> completed)
+    if (source.droppableId !== destination.droppableId) {
+      console.log('Moving between different lists');
+      const newCompleted = destination.droppableId === "CompletedTasks";
+      
+      // Remove from source
+      const newSourceTasks = [...sourceTasks];
+      newSourceTasks.splice(source.index, 1);
+      
+      // Add to destination
+      const newDestTasks = [...destTasks];
+      const updatedItem = { ...item, completed: newCompleted };
+      newDestTasks.splice(destination.index, 0, updatedItem);
+      
+      // Create reorder payload for both lists
+      const tasksToUpdate = [
+        ...newSourceTasks.map((task, index) => ({ 
+          id: task.id, 
+          order: index, 
+          completed: task.completed 
+        })),
+        ...newDestTasks.map((task, index) => ({ 
+          id: task.id, 
+          order: index, 
+          completed: task.id === item.id ? newCompleted : task.completed 
+        }))
+      ];
+      
+      console.log('Tasks to update (cross-list):', tasksToUpdate);
+      
+      if (reorderTasks) {
+        reorderTasks(tasksToUpdate);
+      }
+    } else {
+      // Moving within the same list
+      console.log('Moving within same list');
+      const newTasks = [...sourceTasks];
+      const [movedItem] = newTasks.splice(source.index, 1);
+      newTasks.splice(destination.index, 0, movedItem);
+      
+      const tasksToUpdate = newTasks.map((task, index) => ({
+        id: task.id,
+        order: index,
+        completed: task.completed
+      }));
+      
+      console.log('Tasks to update (same list):', tasksToUpdate);
+      console.log('Current task orders before update:', newTasks.map(t => ({ id: t.id, currentOrder: t.order, newOrder: newTasks.indexOf(t) })));
+      
+      if (reorderTasks) {
+        console.log('Calling reorderTasks');
+        reorderTasks(tasksToUpdate);
+      } else {
+        console.log('reorderTasks is not available');
+      }
     }
   }
 
