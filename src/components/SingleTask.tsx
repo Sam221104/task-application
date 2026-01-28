@@ -16,6 +16,10 @@ type SingleTaskProps = {
 };
 
 const SingleTask = ({ index, task, onDelete, onToggle, onUpdate }: SingleTaskProps) => {
+   if (!task || !task.id) {
+    console.warn('Skipping invalid task:', task);
+    return null; // Skip rendering this task
+  }
   const [edit, setEdit] = useState<boolean>(false)
   const [editTodo, setEditTodo] = useState<string>(task.taskName)
   
@@ -33,7 +37,7 @@ const SingleTask = ({ index, task, onDelete, onToggle, onUpdate }: SingleTaskPro
   }, [edit])
 
   return (
-    <Draggable draggableId={task.id?.toString() || String(Math.random())} index={index}>
+    <Draggable draggableId={task.id.toString() || String(Math.random())} index={index}>
       {(provided) => (
         <form 
           className="todo-single" 
