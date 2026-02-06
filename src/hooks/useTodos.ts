@@ -5,12 +5,11 @@ import {
   addNewTask,
   deleteTodo,
   updateTodoName,
-  toggleTodoStatus,
+  updateTodoStatus,
   reorderTasks,
 } from "../api/api";
 import type { Todo } from "../model/model";
-import { useMemo } from "react";
-
+import { useMemo, useCallback } from "react";
 export const useTodos = () => {
   const queryClient = useQueryClient();
 
@@ -19,38 +18,41 @@ export const useTodos = () => {
   };
 
   // Fetch all tasks
-  const { data: allTasks = [] } = useQuery({
+  const { data: fetchedTasks = [], isLoading } = useQuery({
     queryKey: ["tasks"],
     queryFn: fetchAllTasks,
   });
 
-  // Separate into active and completed
-  // const activeTasks: Todo[] = allTasks
-  //   .filter((t: Todo) => !t.completed)
-  //   .map((t: Todo) => ({
-  //     id: String(t.id),
-  //     taskName: t.taskName,
-  //     completed: false,
-  //   }));
+  // Use only fetched tasks from backend
+  const allTasks = useMemo(() => {
+    return fetchedTasks;
+  }, [fetchedTasks]);
 
-  // const completedTasks: Todo[] = allTasks
-  //   .filter((t: Todo) => t.completed)
-  //   .map((t: Todo) => ({
-  //     id: String(t.id),
-  //     taskName: t.taskName,
-  //     completed: true,
-  //   }));
   const activeTasks = useMemo(() => {
     return allTasks
-      .filter((t: Todo) => !t.completed)
+      .filter((t: Todo) => t.status === "active")
+      .sort((a: Todo, b: Todo) => (a.order || 0) - (b.order || 0));
+  }, [allTasks]);
+
+  const inProgressTasks = useMemo(() => {
+    return allTasks
+      .filter((t: Todo) => t.status === "in_progress")
       .sort((a: Todo, b: Todo) => (a.order || 0) - (b.order || 0));
   }, [allTasks]);
 
   const completedTasks = useMemo(() => {
     return allTasks
-      .filter((t: Todo) => t.completed)
+      .filter((t: Todo) => t.status === "completed")
       .sort((a: Todo, b: Todo) => (a.order || 0) - (b.order || 0));
   }, [allTasks]);
+
+  // Directly set the tasks cache for instant local updates (no server call)
+  const setTasksCache = useCallback(
+    (updater: (old: Todo[]) => Todo[]) => {
+      queryClient.setQueryData<Todo[]>(["tasks"], (old = []) => updater(old));
+    },
+    [queryClient],
+  );
 
   // Mutations
   const addMutation = useMutation({
@@ -68,29 +70,43 @@ export const useTodos = () => {
     onSuccess: invalidateAll,
   });
 
-  const toggleMutation = useMutation({
-    mutationFn: toggleTodoStatus,
-    onSuccess: invalidateAll,
+  const updateStatusMutation = useMutation({
+    mutationFn: updateTodoStatus,
+    onMutate: async ({ id, status }) => {
+      await queryClient.cancelQueries({ queryKey: ["tasks"] });
+      const previous = queryClient.getQueryData<Todo[]>(["tasks"]);
+      // Optimistically update the cache
+      queryClient.setQueryData<Todo[]>(["tasks"], (old = []) =>
+        old.map((t) => (t.id === id ? { ...t, status } : t)),
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["tasks"], context.previous);
+      }
+    },
+    // Remove onSettled to prevent refetch that would reset the local order
   });
 
   const reorderMutation = useMutation({
     mutationFn: reorderTasks,
-    onSuccess: () => {
-      console.log("Reorder mutation success, invalidating queries");
-      invalidateAll();
-    },
-    onError: (error) => {
-      console.error("Reorder mutation error:", error);
+    onError: (err, tasksToUpdate, context) => {
+      // If the mutation fails, invalidate to refetch the correct data
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
   });
 
   return {
     activeTasks,
+    inProgressTasks,
     completedTasks,
+    isLoading,
+    setTasksCache,
     addTask: addMutation.mutate,
     deleteTask: deleteMutation.mutate,
     updateTask: updateMutation.mutate,
-    toggleTask: toggleMutation.mutate,
+    updateTaskStatus: updateStatusMutation.mutate,
     reorderTasks: reorderMutation.mutate,
   };
 };

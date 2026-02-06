@@ -7,9 +7,10 @@ const taskSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    completed: {
-      type: Boolean,
-      default: false,
+    status: {
+      type: String,
+      enum: ["active", "in_progress", "completed"],
+      default: "active",
     },
     order: {
       type: Number,

@@ -11,7 +11,7 @@ export const fetchAllTasks = async () => {
     return tasks.map((task: any) => ({
       id: task._id,
       taskName: task.taskName,
-      completed: task.completed,
+      status: task.status,
       order: task.order || 0,
     }));
   } catch (error) {
@@ -25,14 +25,14 @@ export const addNewTask = async (task: Pick<Todo, "taskName">) => {
     const response = await fetch(`${API_BASE_URL}tasks`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ taskName: task.taskName, completed: false }),
+      body: JSON.stringify({ taskName: task.taskName, status: "active" }),
     });
     const newTask = await response.json();
     // Transform MongoDB _id to id for frontend compatibility
     return {
       id: newTask._id,
       taskName: newTask.taskName,
-      completed: newTask.completed,
+      status: newTask.status,
       order: newTask.order || 0,
     };
   } catch (error) {
@@ -70,25 +70,25 @@ export const updateTodoName = async ({
   }
 };
 
-export const toggleTodoStatus = async ({
+export const updateTodoStatus = async ({
   id,
-  completed,
-}: Pick<Todo, "id" | "completed">) => {
+  status,
+}: Pick<Todo, "id" | "status">) => {
   try {
     const response = await fetch(`${API_BASE_URL}tasks/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ completed }),
+      body: JSON.stringify({ status }),
     });
     return await response.json();
   } catch (error) {
-    console.error("Error toggling task:", error);
+    console.error("Error updating task status:", error);
     throw error;
   }
 };
 
 export const reorderTasks = async (
-  tasks: Array<{ id: string; order: number; completed: boolean }>,
+  tasks: Array<{ id: string; order: number; status: string }>,
 ) => {
   try {
     console.log("API reorderTasks called with:", tasks);
@@ -106,7 +106,7 @@ export const reorderTasks = async (
     return reorderedTasks.map((task: any) => ({
       id: task._id,
       taskName: task.taskName,
-      completed: task.completed,
+      status: task.status,
       order: task.order || 0,
     }));
   } catch (error) {

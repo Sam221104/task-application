@@ -1,8 +1,7 @@
-// import React from 'react'
-import { Button } from '@/components/ui/button'
+import { Button } from './ui/button'
 import './styles.css'
 import { useForm } from 'react-hook-form'
-import { Input } from '@/components/ui/input'
+import { Input } from './ui/input'
 
 type FormInputs = {
   todo: string
@@ -34,7 +33,7 @@ const InputField = ({ handleAdd }: InputProps) => {
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className='container'>
-
+      <div className='input-container'>
         <Input
           type="text"
           {...register('todo', {
@@ -52,6 +51,7 @@ const InputField = ({ handleAdd }: InputProps) => {
         />
         
         <Button type="submit" className='button-input'>Add Task</Button>
+      </div>
         <div>
           {errors.todo && (
           <span style={{ color: 'red', fontSize: '12px' }}>

@@ -37,52 +37,50 @@ const SingleTask = ({ index, task, onDelete, onToggle, onUpdate }: SingleTaskPro
   }, [edit])
 
   return (
-    <Draggable draggableId={task.id.toString() || String(Math.random())} index={index}>
+    <Draggable draggableId={task.id} index={index}>
       {(provided) => (
-        <form 
-          className="todo-single" 
-          onSubmit={handleEdit}  // No need to pass id anymore
+        <form
+          className={`todo-single ${task.status === 'completed' ? 'remove' : ''}`}
+          onSubmit={handleEdit}
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-        > 
-    {edit ? (
-      <input 
-      ref = {inputRef}
-      type = "text"
-      value={editTodo}
-      onChange={(e) => setEditTodo(e.target.value)}
-      />
-    ) : (
-      <>
-      {task.completed?(
-        <s className='todo-single-text'>{task.taskName}</s> )
-        : (
-          <span className='todo-single-text'>{task.taskName}</span>
+        >
+          {edit ? (
+            <input
+              ref={inputRef}
+              type="text"
+              value={editTodo}
+              onChange={(e) => setEditTodo(e.target.value)}
+            />
+          ) : (
+            <>
+              {task.status === 'completed' ? (
+                <s className='todo-single-text'>{task.taskName}</s>
+              ) : (
+                <span className='todo-single-text'>{task.taskName}</span>
+              )}
+            </>
+          )}
 
-        )
-      }
-      </>
-    )}
-      
-      <div>
-        <span className='icon' onClick={() => {
-            if (!edit && !task.completed) {
-              setEdit(!edit)
-            }
-        }}>
-          <CiEdit />
-        </span>
-        <span className='icon' onClick={() => onDelete(task.id)}>
-          <RxCrossCircled />
-        </span>
-        {task.completed ? null : (
-        <span className='icon' onClick={() => onToggle(task.id)}>
-          <IoIosCheckmarkCircleOutline />
-        </span>
-        )}
-      </div>
-    </form>
+          <div>
+            <span className='icon  edit-icon' onClick={() => {
+              if (!edit && task.status !== 'completed') {
+                setEdit(!edit)
+              }
+            }}>
+              <CiEdit />
+            </span>
+            <span className='icon delete-icon' onClick={() => onDelete(task.id)}>
+              <RxCrossCircled />
+            </span>
+            {task.status === 'completed' ? null : (
+              <span className='icon complete-icon' onClick={() => onToggle(task.id)}>
+                <IoIosCheckmarkCircleOutline />
+              </span>
+            )}
+          </div>
+        </form>
       )}
     </Draggable>
   )

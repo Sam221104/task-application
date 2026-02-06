@@ -7,11 +7,14 @@ import { DragDropContext, type DropResult } from "@hello-pangea/dnd"
 function App() {
   const { 
     activeTasks, 
+    inProgressTasks,
     completedTasks,
+    isLoading,
+    setTasksCache,
     addTask, 
     deleteTask, 
     updateTask, 
-    toggleTask,
+    updateTaskStatus,
     reorderTasks
   } = useTodos()
 
@@ -20,91 +23,105 @@ function App() {
   }
 
   const onDragEnd = (result: DropResult) => {
-    console.log('Drag ended:', result);
     const { source, destination } = result;
-    if (!destination) {
-      console.log('No destination, returning');
-      return;
-    }
+    if (!destination) return;
     if (
       destination.droppableId === source.droppableId &&
       destination.index === source.index
-    ) {
-      console.log('Same position, returning');
-      return;
-    }
+    ) return;
 
-    const sourceIsActive = source.droppableId === "TasksList";
-    const destIsActive = destination.droppableId === "TasksList";
-    
-    const sourceTasks = sourceIsActive ? activeTasks : completedTasks;
-    const destTasks = destIsActive ? activeTasks : completedTasks;
-    
-    console.log('Source tasks:', sourceTasks);
-    console.log('Dest tasks:', destTasks);
-    
-    const item = sourceTasks[source.index];
-    if (!item) {
-      console.log('No item found at source index');
-      return;
-    }
+    // Map droppableId to status
+    const droppableIdToStatus = {
+      "ActiveTasks": "active",
+      "InProgressTasks": "in_progress", 
+      "CompletedTasks": "completed"
+    } as const;
 
-    console.log('Moving item:', item);
+    const sourceStatus = droppableIdToStatus[source.droppableId as keyof typeof droppableIdToStatus];
+    const destStatus = droppableIdToStatus[destination.droppableId as keyof typeof droppableIdToStatus];
 
-    // If moving between different lists (active <-> completed)
-    if (source.droppableId !== destination.droppableId) {
-      console.log('Moving between different lists');
-      const newCompleted = destination.droppableId === "CompletedTasks";
-      
+    if (!sourceStatus || !destStatus) return;
+
+    // Get all current tasks
+    const allTasks = [...activeTasks, ...inProgressTasks, ...completedTasks];
+
+    if (sourceStatus !== destStatus) {
+      // Moving between different status columns
+      const sourceArray = allTasks.filter(t => t.status === sourceStatus).sort((a, b) => a.order - b.order);
+      const destArray = allTasks.filter(t => t.status === destStatus).sort((a, b) => a.order - b.order);
+
+      const movedTask = sourceArray[source.index];
+      if (!movedTask) return;
+
       // Remove from source
-      const newSourceTasks = [...sourceTasks];
-      newSourceTasks.splice(source.index, 1);
-      
+      sourceArray.splice(source.index, 1);
       // Add to destination
-      const newDestTasks = [...destTasks];
-      const updatedItem = { ...item, completed: newCompleted };
-      newDestTasks.splice(destination.index, 0, updatedItem);
-      
-      // Create reorder payload for both lists
-      const tasksToUpdate = [
-        ...newSourceTasks.map((task, index) => ({ 
-          id: task.id, 
-          order: index, 
-          completed: task.completed 
-        })),
-        ...newDestTasks.map((task, index) => ({ 
-          id: task.id, 
-          order: index, 
-          completed: task.id === item.id ? newCompleted : task.completed 
-        }))
-      ];
-      
-      console.log('Tasks to update (cross-list):', tasksToUpdate);
-      
-      if (reorderTasks) {
+      const updatedMovedTask = { ...movedTask, status: destStatus };
+      destArray.splice(destination.index, 0, updatedMovedTask);
+
+      // Update orders
+      sourceArray.forEach((task, index) => { task.order = index; });
+      destArray.forEach((task, index) => { task.order = index; });
+
+      // Create updated all tasks
+      const updatedAllTasks = allTasks.map(task => {
+        if (task.id === movedTask.id) return updatedMovedTask;
+        const sourceIndex = sourceArray.findIndex(t => t.id === task.id);
+        if (sourceIndex !== -1) return { ...task, order: sourceIndex };
+        const destIndex = destArray.findIndex(t => t.id === task.id);
+        if (destIndex !== -1) return { ...task, order: destIndex };
+        return task;
+      });
+
+      // Update cache
+      setTasksCache(() => updatedAllTasks);
+
+      // Persist the changes
+      const tasksToUpdate = [...sourceArray, ...destArray].map(task => ({
+        id: task.id,
+        order: task.order,
+        status: task.status
+      }));
+      if (tasksToUpdate.length > 0) {
         reorderTasks(tasksToUpdate);
       }
+
+      // Update the task status
+      updateTaskStatus({ id: movedTask.id, status: destStatus });
     } else {
-      // Moving within the same list
-      console.log('Moving within same list');
-      const newTasks = [...sourceTasks];
-      const [movedItem] = newTasks.splice(source.index, 1);
-      newTasks.splice(destination.index, 0, movedItem);
-      
-      const tasksToUpdate = newTasks.map((task, index) => ({
+      // Moving within same status column - just reorder
+      const statusArray = allTasks.filter(t => t.status === sourceStatus).sort((a, b) => a.order - b.order);
+
+      const movedTask = statusArray[source.index];
+      if (!movedTask) return;
+
+      // Remove and reinsert
+      statusArray.splice(source.index, 1);
+      statusArray.splice(destination.index, 0, movedTask);
+
+      // Update orders
+      statusArray.forEach((task, index) => { task.order = index; });
+
+      // Create updated all tasks
+      const updatedAllTasks = allTasks.map(task => {
+        if (task.status === sourceStatus) {
+          const newIndex = statusArray.findIndex(t => t.id === task.id);
+          return { ...task, order: newIndex };
+        }
+        return task;
+      });
+
+      // Update cache
+      setTasksCache(() => updatedAllTasks);
+
+      // Persist the order
+      const tasksToUpdate = statusArray.map(task => ({
         id: task.id,
-        order: index,
-        completed: task.completed
+        order: task.order,
+        status: task.status
       }));
-      
-      console.log('Tasks to update (same list):', tasksToUpdate);
-      console.log('Current task orders before update:', newTasks.map(t => ({ id: t.id, currentOrder: t.order, newOrder: newTasks.indexOf(t) })));
-      
-      if (reorderTasks) {
-        console.log('Calling reorderTasks');
+      if (tasksToUpdate.length > 0) {
         reorderTasks(tasksToUpdate);
-      } else {
-        console.log('reorderTasks is not available');
       }
     }
   }
@@ -116,10 +133,20 @@ function App() {
         <InputField handleAdd={handleAdd} />
         <TodoList
           tasks={activeTasks}
+          inProgressTasks={inProgressTasks}
           completedTasks={completedTasks}
-          onDeleteTask={(id) => deleteTask(id)}
-          onToggleTask={(id) => toggleTask({ id, completed: true })}
-          onUpdateTask={(id, taskName) => updateTask({ id, taskName })}
+          isLoading={isLoading}
+          onDeleteTask={(id: string) => deleteTask(id)}
+          onToggleTask={(id: string) => {
+            // Find the task and move it to the next status
+            const allTasks = [...activeTasks, ...inProgressTasks, ...completedTasks];
+            const task = allTasks.find(t => t.id === id);
+            if (task) {
+              const nextStatus = task.status === 'active' ? 'in_progress' : task.status === 'in_progress' ? 'completed' : 'active';
+              updateTaskStatus({ id, status: nextStatus });
+            }
+          }}
+          onUpdateTask={(id: string, taskName: string) => updateTask({ id, taskName })}
         />
       </div>
     </DragDropContext>
