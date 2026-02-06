@@ -34,7 +34,7 @@ const TodoList = React.memo(({
             </div>
             <div className={`task-container ${tasks.length > 5 ? 'scrollable' : ''}`}>
               {isLoading ? (
-                <div className="loading-message">It's loading...</div>
+                <div className="loading-message">Loading...</div>
               ) : tasks.length === 0 ? (
                 <div className="no-tasks-message">No tasks found</div>
               ) : (
@@ -64,7 +64,7 @@ const TodoList = React.memo(({
             </div>
             <div className={`task-container ${inProgressTasks.length > 5 ? 'scrollable' : ''}`}>
               {isLoading ? (
-                <div className="loading-message">It's loading...</div>
+                <div className="loading-message">Loading...</div>
               ) : inProgressTasks.length === 0 ? (
                 <div className="no-tasks-message">No tasks found</div>
               ) : (
@@ -94,7 +94,7 @@ const TodoList = React.memo(({
             </div>
             <div className={`task-container ${completedTasks.length > 5 ? 'scrollable' : ''}`}>
               {isLoading ? (
-                <div className="loading-message">It's loading...</div>
+                <div className="loading-message">Loading...</div>
               ) : completedTasks.length === 0 ? (
                 <div className="no-tasks-message">No tasks found</div>
               ) : (
